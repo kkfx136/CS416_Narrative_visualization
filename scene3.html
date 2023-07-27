@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<style>
+    body {
+        background-color: #999;
+        font-family: Arial;
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0;
+        padding-top: 50px;
+    }
+    
+    header {
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    nav {
+        background-color: #999;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+    }
+    /* /* section {
+        padding: 20px;
+    }
+     */
+    
+    h1 {
+        font-size: 1em;
+        margin: 0;
+    }
+    
+    h2 {
+        font-size: 0.8em;
+        margin: 0;
+    }
+    
+    ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    li {
+        display: inline-block;
+        margin: 0 10px;
+        font-size: 0.3em;
+    }
+    
+    b {
+        color: #000;
+        text-decoration: none;
+    }
+    
+    a {
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    p {
+        margin: 0 0 20px 0;
+    }
+    
+    .toolTip {
+        color: #fff;
+        position: absolute;
+        display: inline-block;
+        pointer-events: none;
+        padding: 2px;
+    }
+    
+    .bar {
+        fill: #fc8452;
+        outline: thin solid #000;
+    }
+    
+    circle {
+        fill: #5470c6;
+        stroke: black;
+    }
+    
+    */
+</style>
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scatter plot for math score vs reading/writing score with pie chart</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body onload='scachart()'>
+    <header>Scatter plot for math score vs reading/writing score with pie chart</header><br />
+    <h1>
+        In this scene, you will see the math score distribution for an integer column chosen by you.
+    </h1>
+    <br />
+    <h2>
+        <label for="Columns">Choose one column in dataset to see math score vs its distribution:</label>
+
+        <select name="Columns" id="Columns">
+            <option value="readingscore">reading score</option>
+            <option value="writingscore">writing score</option>
+        </select>
+    </h2>
+
+    <!-- colors: [
+    "#5470c6",
+    "#91cc75",
+    "#fac858",
+    "#ee6666",
+    "#73c0de",
+    "#3ba272",
+    "#fc8452",
+    "#9a60b4",
+    "#ea7ccc"
+] -->
+
+
+    <svg id="main" width="900" height="600"></svg>
+    </div>
+
+
+
+    <script>
+        async function scachart() {
+            const data = await d3.csv('https://raw.githubusercontent.com/kkfx136/CS416_Narrative_visualization/main/exams.csv');
+            var plot = function(col) {
+                var svg = d3.select("svg")
+                var column = col
+
+
+                var tooltip = d3.select("body")
+                    .append("div")
+                    .attr("class", "toolTip");
+                var x = d3.scaleLinear()
+                    .domain([0, 100])
+                    .range([0, 700]);
+                var y = d3.scaleLinear()
+                    .domain([0, 100])
+                    .range([400, 0]);
+
+                var chartsca = d3.select("svg")
+                    .attr("width", 900)
+                    .attr("height", 500)
+                    .append("g")
+                    .attr("transform", "translate(" + 100 + "," + 100 + ")")
+
+
+                chartsca
+                    .selectAll("dot")
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => x(d[col]))
+                    .attr("cy", d => y(d.mathscore))
+                    .attr("r", 3)
+                    .on("mousemove", function(d) {
+                        tooltip
+                            .style("left", d3.event.pageX + 10 + "px")
+                            .style("top", d3.event.pageY + 10 + "px")
+                            .style("display", "inline-block")
+                            .html(col + ": " + (d[col]) + ", " + " Math Score: " +
+                                (d.mathscore));
+                    })
+                    .on("mouseout", function(d) {
+                        tooltip.style("display", "none");
+                    });
+
+                d3.select("svg").append("g")
+                    .attr("transform", "translate(100,100)")
+                    .call(d3.axisLeft(y)
+                        .tickValues([20, 40, 60, 80, 100]));
+                d3.select("svg").append("g")
+                    .attr("transform", "translate(100,499)")
+                    .call(d3.axisTop(x)
+                        .tickValues([20, 40, 60, 80, 100]));
+
+                // arcs.append("text")
+                //     .attr("transform", function(d) {
+                //         return "translate(" + label.centroid(d) + ")";
+                //     })
+                //     .text(d => d.data.key);
+
+                if (column == "readingscore") {
+                    label = "Math score seems to be in a linear relation with Reading score",
+                        title = "Reading score"
+
+                } else if (column == "writingscore") {
+                    label = "Math score seems to be in a linear relation with Writing score",
+                        title = "Writing score"
+
+                }
+
+                const annotations = [{
+                    note: {
+                        label: label,
+                        bgPadding: 10,
+                        title: title
+                    },
+                    x: 450,
+                    y: 300,
+                    dy: 50,
+                    dx: 300,
+                    color: ['#ee6666']
+                }]
+                const type = d3.annotationLabel
+
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotations)
+                    .type(type)
+                d3.select("svg")
+                    .append("g")
+                    .call(makeAnnotations)
+
+            }
+            var selectcolchange = function() {
+                var col = d3.select(this).property('value')
+                d3.select("g").html = ""
+                d3.selectAll("svg > *").remove();
+                plot(col);
+            };
+            var selectcol = d3.select("#Columns")
+                .on("change", selectcolchange);
+
+            plot('readingscore');
+
+        }
+    </script>
+
+</body>
+
+<center>
+    <br />
+    <a href="scene2.html"><button>Previous scene</button></a>
+</center>
+
+</html>

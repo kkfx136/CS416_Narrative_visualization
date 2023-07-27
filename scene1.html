@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<style>
+    body {
+        background-color: #999;
+        font-family: Arial;
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0;
+        padding-top: 50px;
+    }
+    
+    header {
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    nav {
+        background-color: #999;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+    }
+    /* /* section {
+        padding: 20px;
+    }
+     */
+    
+    h1 {
+        font-size: 1em;
+        margin: 0;
+    }
+    
+    h2 {
+        font-size: 0.8em;
+        margin: 0;
+    }
+    
+    ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    li {
+        display: inline-block;
+        margin: 0 10px;
+        font-size: 0.3em;
+    }
+    
+    b {
+        color: #000;
+        text-decoration: none;
+    }
+    
+    a {
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    p {
+        margin: 0 0 20px 0;
+    }
+    
+    .toolTip {
+        color: #fff;
+        position: absolute;
+        display: inline-block;
+        pointer-events: none;
+        padding: 2px;
+    }
+    
+    */
+</style>
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Data distribution with pie chart</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body onload='piechart()'>
+    <header>Data distribution with pie chart</header><br />
+    <h1>
+        Let's see the distribution of data about students before deeper mining!
+    </h1>
+    <br />
+    <h2>
+        <label for="Columns">Choose one column in dataset to see its distribution:</label>
+
+        <select name="Columns" id="Columns">
+            <option value="gender">Gender</option>
+            <option value="race/ethnicity">Race/ethnicity</option>
+            <option value="parental level of education">Parental level of education</option>
+            <option value="lunch">Lunch</option>
+            <option value="test preparation course">Test preparation course</option>
+        </select>
+    </h2>
+
+    <!-- colors: [
+    "#5470c6",
+    "#91cc75",
+    "#fac858",
+    "#ee6666",
+    "#73c0de",
+    "#3ba272",
+    "#fc8452",
+    "#9a60b4",
+    "#ea7ccc"
+] -->
+
+
+    <svg id="main" width="900" height="600"></svg>
+
+
+
+    <script>
+        async function piechart() {
+            const data = await d3.csv('https://raw.githubusercontent.com/kkfx136/CS416_Narrative_visualization/main/exams.csv');
+            var plot = function(col) {
+                var svg = d3.select("svg")
+                var column = col
+                var nestdata = d3.nest()
+                    .key(d => d[column])
+                    .rollup(v => v.length)
+                    .entries(data);
+
+
+                var tooltip = d3.select("body")
+                    .append("div")
+                    .attr("class", "toolTip");
+
+
+                var pie = d3.pie()
+                    .value(function(d) {
+                        return d.value;
+                    });
+                var arc = d3.arc().innerRadius(0).outerRadius(300);
+
+
+                g = svg.append("g")
+                    .attr("transform", "translate(" + 450 + "," + 300 + ")");
+
+                var arcs = g.selectAll("arc")
+                    .data(pie(nestdata))
+                    .enter()
+                    .append("g");
+
+                arcs.append("path")
+                    .attr("d", arc)
+                    .attr("fill", function(data, i) {
+                        return d3.schemeSet1[i];
+                    })
+                    .on("mousemove", function(d) {
+                        tooltip
+                            .style("left", d3.event.pageX + 10 + "px")
+                            .style("top", d3.event.pageY + 10 + "px")
+                            .style("display", "inline-block")
+                            .html((d3.format(".3f")(d.value / 1000 * 100) + "%"));
+                    })
+                    .on("mouseout", function(d) {
+                        tooltip.style("display", "none");
+                    });
+
+
+                var label = d3.arc()
+                    .outerRadius(350)
+                    .innerRadius(0);
+
+                arcs.append("text")
+                    .attr("transform", function(d) {
+                        return "translate(" + label.centroid(d) + ")";
+                    })
+                    .text(d => d.data.key);
+
+                if (column == "gender") {
+                    label = "The number of each gender is close",
+                        title = "Gender"
+
+                } else if (column == "race/ethnicity") {
+                    label = "The biggest racial or ethnic group is Group C, next one is Group D",
+                        title = "Race/ethnicity"
+
+                } else if (column == "parental level of education") {
+                    label = "Parental education level of student are evenly distributed ",
+                        title = "Parental level of education"
+
+                } else if (column == "lunch") {
+                    label = "Most students finish their lunch standardly",
+                        title = "Lunch"
+
+                } else if (column == "test preparation course") {
+                    label = "Most students didn't complete their test preparation course",
+                        title = "Test preparation course"
+
+                }
+
+                const annotations = [{
+                    note: {
+                        label: label,
+                        bgPadding: 10,
+                        title: title
+                    },
+                    x: 450,
+                    y: 300,
+                    dy: 160,
+                    dx: 300,
+                    color: ['#ee6666']
+                }]
+                const type = d3.annotationLabel
+
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotations)
+                    .type(type)
+                d3.select("svg")
+                    .append("g")
+                    .call(makeAnnotations)
+
+            }
+            var selectcolchange = function() {
+                var col = d3.select(this).property('value')
+                d3.select("g").html = ""
+                d3.selectAll("svg > *").remove();
+                plot(col);
+            };
+            var selectcol = d3.select("#Columns")
+                .on("change", selectcolchange);
+
+            plot('gender');
+
+        }
+    </script>
+</body>
+<center>
+    <a href="Intro.html"><button>Previous scene</button></a> <a href="scene2.html"><button>Next scene</button></a>
+</center>
+
+</html>
